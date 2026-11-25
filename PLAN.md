@@ -47,8 +47,8 @@ Sin servidor, quien tenga un enlace puede abrirlo. El organizador no ve los resu
 ## Estado (25 de noviembre de 2026)
 
 - Fases 1 a 6 hechas: la página está en `index.html` y probada (1.000 sorteos sin fallos, enlaces en vista móvil, enlaces cortados, dos sorteos a la vez).
-- Fase 7 hecha: publicada en GitHub Pages en https://pasango.github.io/amigo-invisible/ (repositorio `pasango/amigo-invisible`, rama `main`). Cada `git push` a `main` la vuelve a publicar.
-- Por decidir: si se usa un dominio propio. Hay que decidirlo antes de hacer los sorteos de verdad, porque las listas se guardan por dirección web.
+- Fase 7 hecha: publicada en GitHub Pages en **https://familia-gomez-amigo-invisible.github.io/** (organización gratuita `familia-gomez-amigo-invisible`, repositorio `familia-gomez-amigo-invisible.github.io`, rama `main`). Cada `git push` a `main` la vuelve a publicar.
+- Dirección definitiva: los sorteos de verdad se hacen desde aquí, porque las listas se guardan por dirección web. La dirección anterior (`pasango.github.io/amigo-invisible`) ya no se usa.
 
 ## Fuera de alcance por ahora (se puede añadir después)
 
