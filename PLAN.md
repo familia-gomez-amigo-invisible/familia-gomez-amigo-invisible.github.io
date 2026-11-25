@@ -47,7 +47,8 @@ Sin servidor, quien tenga un enlace puede abrirlo. El organizador no ve los resu
 ## Estado (25 de noviembre de 2026)
 
 - Fases 1 a 6 hechas: la página está en `index.html` y probada (1.000 sorteos sin fallos, enlaces en vista móvil, enlaces cortados, dos sorteos a la vez).
-- Pendiente: fase 7, publicarla. Hasta entonces, la página avisa de que los enlaces generados en local no funcionan en otros móviles.
+- Fase 7 hecha: publicada en GitHub Pages en https://pasango.github.io/amigo-invisible/ (repositorio `pasango/amigo-invisible`, rama `main`). Cada `git push` a `main` la vuelve a publicar.
+- Por decidir: si se usa un dominio propio. Hay que decidirlo antes de hacer los sorteos de verdad, porque las listas se guardan por dirección web.
 
 ## Fuera de alcance por ahora (se puede añadir después)
 
