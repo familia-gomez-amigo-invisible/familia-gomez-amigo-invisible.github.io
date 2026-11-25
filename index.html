@@ -95,6 +95,8 @@
   label.check { display: inline-flex; gap: 8px; align-items: center; font-size: 14px; color: var(--suave); cursor: pointer; }
   label.check input { width: 18px; height: 18px; accent-color: var(--rojo); }
   .exclusion { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 6px 6px 12px; background: #fff; border: 1px solid var(--borde); border-radius: 10px; font-size: 15px; }
+  .fila-oculta { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .fila-oculta .ayuda { margin: 0; }
 
   .mensaje { border-radius: 12px; padding: 12px 14px; margin: 12px 0 0; font-size: 15px; }
   .mensaje.error { background: var(--error); border: 1px solid var(--error-borde); }
@@ -199,10 +201,19 @@
   function construirPermitidos(sorteo) {
     const ps = sorteo.participantes;
     const prohibido = new Set(sorteo.exclusiones.map((e) => e.de + '>' + e.a));
+    const fijas = sorteo.fijas || [];
+    const fijoDe = new Map(fijas.map((f) => [f.de, f.a]));
+    const reservados = new Set(fijas.map((f) => f.a)); // ya tienen quien les regale
     const permitidos = new Map();
     for (const p of ps) {
+      if (fijoDe.has(p.id)) {
+        // Una asignación fija manda sobre los grupos y las exclusiones.
+        const destino = fijoDe.get(p.id);
+        permitidos.set(p.id, destino !== p.id && ps.some((q) => q.id === destino) ? [destino] : []);
+        continue;
+      }
       permitidos.set(p.id, ps
-        .filter((q) => q.id !== p.id && !(p.grupo && p.grupo === q.grupo) && !prohibido.has(p.id + '>' + q.id))
+        .filter((q) => q.id !== p.id && !reservados.has(q.id) && !(p.grupo && p.grupo === q.grupo) && !prohibido.has(p.id + '>' + q.id))
         .map((q) => q.id));
     }
     return permitidos;
@@ -244,7 +255,7 @@
     for (const p of ps) {
       if (!ps.some((q) => permitidos.get(q.id).includes(p.id))) return `Con estas reglas, nadie puede regalar a ${p.nombre}.`;
     }
-    return 'Con estas exclusiones no hay ninguna forma de hacer el sorteo. Prueba a quitar alguna exclusión o a sacar a alguien de un grupo.';
+    return 'Con estas reglas no hay ninguna forma de hacer el sorteo. Prueba a quitar alguna exclusión o asignación fija, o a sacar a alguien de un grupo.';
   }
 
   // Devuelve { ok: true, asignacion: { idDador: idDestinatario } } o { ok: false, motivo }.
@@ -352,7 +363,10 @@
   function cargar() {
     try {
       const e = JSON.parse(localStorage.getItem(CLAVE_ALMACEN));
-      if (e && Array.isArray(e.sorteos)) return e;
+      if (e && Array.isArray(e.sorteos)) {
+        e.sorteos.forEach((s) => { if (!Array.isArray(s.fijas)) s.fijas = []; }); // sorteos guardados antes de existir las fijas
+        return e;
+      }
     } catch (_) { /* datos dañados: se empieza de cero */ }
     return { sorteos: [], activo: null };
   }
@@ -361,10 +375,11 @@
     try { localStorage.setItem(CLAVE_ALMACEN, JSON.stringify(estado)); } catch (_) { /* sin almacenamiento */ }
   }
 
-  const borradorVacio = () => ({ nombres: '', grupo: '', de: '', a: '', ambos: true });
+  const borradorVacio = () => ({ nombres: '', grupo: '', de: '', a: '', ambos: true, fijaDe: '', fijaA: '' });
   let borrador = borradorVacio(); // lo que se está escribiendo y aún no se ha añadido
   const avisos = {};               // mensajes que se muestran una vez
   let copiado = null;
+  let mostrarFijas = false;        // las asignaciones fijas están ocultas por defecto
   let renderPendiente = null;
 
   const sorteoActivo = () => estado.sorteos.find((s) => s.id === estado.activo) || estado.sorteos[0] || null;
@@ -539,13 +554,45 @@
       ${exclusiones ? `<ul class="lista">${exclusiones}</ul>` : ''}
     </section>`;
 
+    // 4. Asignaciones fijas: solo las ve quien organiza, y ocultas por defecto
+    const nf = s.fijas.length;
+    const fijas = s.fijas.map((f) => `<li class="exclusion">
+        <span>🔒 <strong>${esc(nombreDe(f.de))}</strong> le regala a <strong>${esc(nombreDe(f.a))}</strong></span>
+        <button type="button" class="boton icono" data-accion="quitar-fija" data-de="${f.de}" aria-label="Quitar esta asignación fija" title="Quitar">✕</button>
+      </li>`).join('');
+    const botonOcultar = '<button type="button" class="boton icono" data-accion="ocultar-fijas">Ocultar</button>';
+    const contenidoFijas = !mostrarFijas
+      ? `<div class="fila-oculta">
+          ${nf ? `<span class="ayuda">${plural(nf, 'asignación fija oculta', 'asignaciones fijas ocultas')}.</span>` : ''}
+          <button type="button" class="boton secundario" data-accion="mostrar-fijas">${nf ? 'Mostrar' : 'Añadir una asignación fija'}</button>
+        </div>`
+      : conNombre.length < 2
+        ? `<p class="ayuda">Añade antes al menos dos participantes.</p>${botonOcultar}`
+        : `<div class="exclusion-form">
+            <select id="fija-de" data-borrador="fijaDe" aria-label="Persona que regala (asignación fija)">${opcionesPersona(borrador.fijaDe)}</select>
+            <span class="texto">le regala a</span>
+            <select id="fija-a" data-borrador="fijaA" aria-label="Persona que recibe (asignación fija)">${opcionesPersona(borrador.fijaA)}</select>
+          </div>
+          <div class="exclusion-opciones">
+            ${botonOcultar}
+            <button type="button" class="boton secundario" data-accion="anadir-fija">Fijar</button>
+          </div>
+          ${htmlAviso('fijas')}
+          ${fijas ? `<ul class="lista">${fijas}</ul>` : ''}`;
+
+    const seccionFijas = `<section class="tarjeta">
+      <h2>4. Asignaciones fijas <span class="contador">opcional · solo las ves tú</span></h2>
+      <p class="ayuda">Para decidir tú que alguien le regale a una persona concreta. El resto se sortea al azar, y en los enlaces no se nota qué parejas has elegido tú.</p>
+      ${contenidoFijas}
+    </section>`;
+
     const seccionSorteo = `<section class="tarjeta">
       <button type="button" class="boton principal grande" data-accion="sortear">🎲 Hacer el sorteo</button>
       ${htmlAviso('sorteo')}
       <p class="ayuda" style="margin:10px 0 0;text-align:center">No verás a quién le toca cada uno: solo los enlaces para enviar.</p>
     </section>`;
 
-    return seccionParticipantes + seccionGrupos + seccionExclusiones + seccionSorteo;
+    return seccionParticipantes + seccionGrupos + seccionExclusiones + seccionFijas + seccionSorteo;
   }
 
   function htmlResultado(s) {
@@ -667,12 +714,46 @@
       avisos.exclusiones = { tipo: 'aviso', texto: `${pd.nombre} y ${pa.nombre} ya están en el mismo grupo, así que ya no se regalan entre sí.` };
       return render();
     }
+    if (s.fijas.some((f) => (f.de === de && f.a === a) || (ambos && f.de === a && f.a === de))) {
+      // Aviso deliberadamente vago: las asignaciones fijas pueden estar ocultas en pantalla.
+      avisos.exclusiones = { tipo: 'aviso', texto: 'Esa exclusión choca con una de tus asignaciones fijas. Revísalas en el apartado 4.' };
+      return render();
+    }
     const existe = (x, y) => s.exclusiones.some((e) => e.de === x && e.a === y);
     if (!existe(de, a)) s.exclusiones.push({ de, a });
     if (ambos && !existe(a, de)) s.exclusiones.push({ de: a, a: de });
     borrador.de = '';
     borrador.a = '';
     borrador.ambos = true;
+    guardar();
+    render();
+  }
+
+  function anadirFija(s) {
+    const de = borrador.fijaDe;
+    const a = borrador.fijaA;
+    const avisar = (texto) => { avisos.fijas = { tipo: 'aviso', texto }; render(); };
+    const pd = persona(s, de);
+    const pa = persona(s, a);
+    if (!pd || !pa) return avisar('Elige las dos personas.');
+    if (de === a) return avisar('Elige dos personas distintas.');
+    const delDador = s.fijas.find((f) => f.de === de);
+    if (delDador) return avisar(`Ya está fijado que ${pd.nombre} le regala a ${persona(s, delDador.a).nombre}. Quita esa asignación si quieres cambiarla.`);
+    const alReceptor = s.fijas.find((f) => f.a === a);
+    if (alReceptor) return avisar(`Ya está fijado que ${persona(s, alReceptor.de).nombre} le regala a ${pa.nombre}.`);
+
+    const notas = [];
+    if (s.exclusiones.some((e) => e.de === de && e.a === a)) {
+      s.exclusiones = s.exclusiones.filter((e) => !(e.de === de && e.a === a));
+      notas.push(`Se ha quitado la exclusión «${pd.nombre} no le regala a ${pa.nombre}» porque contradecía esta asignación.`);
+    }
+    if (pd.grupo && pd.grupo === pa.grupo) {
+      notas.push(`${pd.nombre} y ${pa.nombre} están en el mismo grupo, pero esta asignación fija se respetará igualmente.`);
+    }
+    s.fijas.push({ de, a });
+    if (notas.length) avisos.fijas = { tipo: 'aviso', texto: notas.join(' ') };
+    borrador.fijaDe = '';
+    borrador.fijaA = '';
     guardar();
     render();
   }
@@ -697,6 +778,7 @@
     s.nombre = normalizar(s.nombre);
     s.resultado = { fecha, enlaces, enviados: {} };
     borrador = borradorVacio();
+    mostrarFijas = false;
     guardar();
     render();
     window.scrollTo({ top: 0 });
@@ -736,16 +818,17 @@
     const id = el.dataset.id;
     switch (accion) {
       case 'nuevo-sorteo': {
-        const nuevo = { id: uid(), nombre: '', participantes: [], grupos: [], exclusiones: [], resultado: null };
+        const nuevo = { id: uid(), nombre: '', participantes: [], grupos: [], exclusiones: [], fijas: [], resultado: null };
         estado.sorteos.push(nuevo);
         estado.activo = nuevo.id;
         borrador = borradorVacio();
+        mostrarFijas = false;
         guardar();
         render('#nombre-sorteo');
         break;
       }
       case 'seleccionar-sorteo':
-        if (id !== estado.activo) borrador = borradorVacio();
+        if (id !== estado.activo) { borrador = borradorVacio(); mostrarFijas = false; }
         estado.activo = id;
         guardar();
         render();
@@ -755,6 +838,7 @@
         estado.sorteos = estado.sorteos.filter((x) => x.id !== s.id);
         estado.activo = estado.sorteos.length ? estado.sorteos[0].id : null;
         borrador = borradorVacio();
+        mostrarFijas = false;
         guardar();
         render();
         break;
@@ -764,8 +848,8 @@
       case 'quitar-persona':
         s.participantes = s.participantes.filter((p) => p.id !== id);
         s.exclusiones = s.exclusiones.filter((e) => e.de !== id && e.a !== id);
-        if (borrador.de === id) borrador.de = '';
-        if (borrador.a === id) borrador.a = '';
+        s.fijas = s.fijas.filter((f) => f.de !== id && f.a !== id);
+        for (const campo of ['de', 'a', 'fijaDe', 'fijaA']) if (borrador[campo] === id) borrador[campo] = '';
         guardar();
         render();
         break;
@@ -805,6 +889,19 @@
         render();
         break;
       }
+      case 'mostrar-fijas':
+      case 'ocultar-fijas':
+        mostrarFijas = accion === 'mostrar-fijas';
+        render(mostrarFijas ? '#fija-de' : null);
+        break;
+      case 'anadir-fija':
+        anadirFija(s);
+        break;
+      case 'quitar-fija':
+        s.fijas = s.fijas.filter((f) => f.de !== el.dataset.de);
+        guardar();
+        render();
+        break;
       case 'sortear':
         hacerSorteo(s);
         break;

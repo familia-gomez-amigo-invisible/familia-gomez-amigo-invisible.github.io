@@ -17,6 +17,7 @@ Una página web estática (un único `index.html`, sin servidor ni dependencias)
 - **Exclusiones**:
   - **Grupos / hogares**: las personas del mismo grupo no se regalan entre sí (parejas, gente que vive junta).
   - **Exclusiones sueltas**: "A no le regala a B" para casos concretos.
+  - **Asignaciones fijas** (solo las ve quien organiza): "A le regala a B" sí o sí. Mandan sobre grupos y exclusiones; el resto se sortea al azar. El apartado está oculto por defecto (solo muestra cuántas hay) por si alguien mira la pantalla, y los enlaces no revelan qué parejas son fijas.
 - **Sorteo**:
   - Nadie se regala a sí mismo y se respetan todas las exclusiones.
   - Aleatoriedad con `crypto.getRandomValues`.
