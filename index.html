@@ -1,0 +1,982 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Amigo invisible</title>
+<meta name="description" content="Abre tu enlace para descubrir a quién le regalas.">
+<meta property="og:title" content="🎁 Amigo invisible">
+<meta property="og:description" content="Abre tu enlace para descubrir a quién le regalas.">
+<meta name="theme-color" content="#b3261e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%81%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --fondo: #f6f0e6;
+    --tarjeta: #fffdf8;
+    --texto: #2a211c;
+    --suave: #6e6058;
+    --borde: #e5d9ca;
+    --rojo: #b3261e;
+    --rojo-osc: #8f1d17;
+    --verde: #1d6a4e;
+    --verde-osc: #14513b;
+    --verde-claro: #e2f0e8;
+    --aviso: #fff3d1;
+    --aviso-borde: #ecd38a;
+    --error: #fde7e4;
+    --error-borde: #f0b4ac;
+    --radio: 14px;
+    --sombra: 0 1px 2px rgba(60, 40, 20, .06), 0 4px 16px rgba(60, 40, 20, .06);
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--fondo); color: var(--texto); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  [hidden] { display: none !important; }
+
+  .contenedor { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+  .cabecera { text-align: center; margin: 8px 0 24px; }
+  .cabecera h1 { font-family: Georgia, "Times New Roman", serif; font-size: clamp(28px, 6vw, 40px); margin: 0; color: var(--rojo); letter-spacing: -.01em; }
+  .cabecera p { margin: 6px 0 0; color: var(--suave); }
+
+  .pestanas { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .pestana { border: 1px solid var(--borde); background: var(--tarjeta); color: var(--texto); padding: 8px 16px; border-radius: 999px; font: inherit; font-weight: 600; cursor: pointer; }
+  .pestana:hover { border-color: var(--suave); }
+  .pestana[aria-selected="true"] { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+  .pestana.nueva { border-style: dashed; color: var(--suave); font-weight: 500; }
+
+  .tarjeta { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: var(--radio); box-shadow: var(--sombra); padding: 20px; margin-bottom: 16px; }
+  .tarjeta h2 { font-size: 18px; margin: 0 0 4px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .tarjeta h2 .contador { font-size: 14px; color: var(--suave); font-weight: 500; }
+  .ayuda { color: var(--suave); font-size: 14px; margin: 0 0 12px; }
+
+  input[type=text], textarea, select { font: inherit; color: inherit; background: #fff; border: 1px solid var(--borde); border-radius: 10px; padding: 10px 12px; width: 100%; min-width: 0; }
+  textarea { resize: vertical; min-height: 96px; }
+  input:focus, textarea:focus, select:focus { outline: 3px solid rgba(179, 38, 30, .2); outline-offset: 0; border-color: var(--rojo); }
+  button:focus-visible, a:focus-visible { outline: 3px solid rgba(179, 38, 30, .35); outline-offset: 2px; }
+
+  .boton { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font: inherit; font-weight: 600; border-radius: 10px; padding: 10px 16px; border: 1px solid transparent; cursor: pointer; text-decoration: none; white-space: nowrap; }
+  .boton.principal { background: var(--rojo); color: #fff; }
+  .boton.principal:hover { background: var(--rojo-osc); }
+  .boton.verde { background: var(--verde); color: #fff; }
+  .boton.verde:hover { background: var(--verde-osc); }
+  .boton.secundario { background: #fff; color: var(--texto); border-color: var(--borde); }
+  .boton.secundario:hover { border-color: var(--suave); }
+  .boton.peligro { background: #fff; color: var(--rojo); border-color: var(--error-borde); }
+  .boton.peligro:hover { background: var(--error); }
+  .boton.grande { width: 100%; padding: 14px 18px; font-size: 18px; }
+  .boton.icono { padding: 6px 10px; font-weight: 500; color: var(--suave); background: transparent; }
+  .boton.icono:hover { color: var(--rojo); }
+
+  .fila { display: flex; gap: 8px; align-items: center; }
+  .fila > input { flex: 1; }
+  .pila { display: grid; gap: 8px; }
+
+  .lista { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 6px; }
+  .persona { display: flex; align-items: center; gap: 8px; }
+  .persona .num { width: 24px; text-align: right; color: var(--suave); font-size: 14px; flex: none; }
+  .persona input { flex: 1; padding: 8px 10px; }
+  .persona.duplicado input { border-color: var(--rojo); background: var(--error); }
+  .etiqueta-grupo { font-size: 12px; background: var(--verde-claro); color: var(--verde-osc); padding: 2px 8px; border-radius: 999px; white-space: nowrap; max-width: 35%; overflow: hidden; text-overflow: ellipsis; }
+
+  .grupo { border: 1px solid var(--borde); border-radius: 12px; padding: 12px; margin-top: 10px; background: #fff; }
+  .grupo-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .grupo-cab strong { overflow-wrap: anywhere; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .chip { display: inline-flex; align-items: center; gap: 2px; background: var(--verde-claro); color: var(--verde-osc); border-radius: 999px; padding: 3px 3px 3px 12px; font-size: 14px; }
+  .chip button { border: 0; background: transparent; color: inherit; cursor: pointer; font-size: 16px; line-height: 1; padding: 3px 7px; border-radius: 999px; }
+  .chip button:hover { background: rgba(0, 0, 0, .08); }
+  .chips select { width: auto; max-width: 100%; padding: 5px 10px; font-size: 14px; }
+  .chips .ayuda { margin: 0; }
+
+  .exclusion-form { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; }
+  .exclusion-form .texto { color: var(--suave); font-size: 14px; text-align: center; }
+  .exclusion-opciones { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+  label.check { display: inline-flex; gap: 8px; align-items: center; font-size: 14px; color: var(--suave); cursor: pointer; }
+  label.check input { width: 18px; height: 18px; accent-color: var(--rojo); }
+  .exclusion { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 6px 6px 12px; background: #fff; border: 1px solid var(--borde); border-radius: 10px; font-size: 15px; }
+
+  .mensaje { border-radius: 12px; padding: 12px 14px; margin: 12px 0 0; font-size: 15px; }
+  .mensaje.error { background: var(--error); border: 1px solid var(--error-borde); }
+  .mensaje.aviso { background: var(--aviso); border: 1px solid var(--aviso-borde); }
+
+  .nombre-sorteo { display: flex; gap: 8px; align-items: center; }
+  .nombre-sorteo input { font-size: 22px; font-weight: 700; border-color: transparent; background: transparent; padding: 4px 8px; margin-left: -8px; }
+  .nombre-sorteo input:hover:not([readonly]) { border-color: var(--borde); }
+  .nombre-sorteo input[readonly] { outline: none; }
+  .resumen { color: var(--suave); font-size: 14px; margin: 2px 0 0; }
+
+  .progreso { height: 8px; background: var(--borde); border-radius: 999px; overflow: hidden; margin: 10px 0 12px; }
+  .progreso div { height: 100%; background: var(--verde); transition: width .3s; }
+  .envio { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--borde); border-radius: 12px; background: #fff; flex-wrap: wrap; }
+  .envio .quien { flex: 1; min-width: 120px; font-weight: 600; overflow-wrap: anywhere; }
+  .envio.enviado { background: #f4f9f6; border-color: #cfe5d8; }
+  .envio .marca { color: var(--verde); font-weight: 700; }
+  .envio .acciones { display: flex; gap: 8px; }
+  .estado { border: 0; background: transparent; color: var(--suave); cursor: pointer; text-decoration: underline; padding: 4px; font: inherit; font-size: 13px; }
+
+  .vacio { text-align: center; padding: 32px 20px; }
+  .vacio h2 { justify-content: center; }
+  .vacio .emoji { font-size: 48px; line-height: 1.2; }
+  .pie { text-align: center; color: var(--suave); font-size: 13px; margin-top: 24px; }
+
+  /* Vista del participante */
+  .participante { min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; background: radial-gradient(circle at 50% 0%, #fff8ee 0, var(--fondo) 65%); }
+  .regalo { width: 100%; max-width: 420px; text-align: center; background: var(--tarjeta); border: 1px solid var(--borde); border-top: 6px solid var(--rojo); border-radius: 20px; box-shadow: var(--sombra); padding: 32px 24px 28px; }
+  .regalo .lazo { font-size: 56px; line-height: 1; }
+  .regalo .sorteo { text-transform: uppercase; letter-spacing: .08em; font-size: 13px; font-weight: 600; color: var(--verde); margin: 14px 0 4px; }
+  .regalo h1 { font-family: Georgia, "Times New Roman", serif; font-size: 30px; margin: 0 0 18px; overflow-wrap: anywhere; }
+  .regalo p { margin: 0 0 14px; }
+  .secreto { animation: aparecer .5s ease-out; }
+  .secreto .te-toca { color: var(--suave); margin: 0; }
+  .secreto .nombre-secreto { font-family: Georgia, "Times New Roman", serif; font-size: clamp(36px, 11vw, 54px); color: var(--rojo); font-weight: 700; margin: 2px 0 14px; overflow-wrap: anywhere; line-height: 1.15; }
+  .nota { font-size: 13px; color: var(--suave); margin: 18px 0 0 !important; }
+  @keyframes aparecer { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .secreto { animation: none; }
+    .progreso div { transition: none; }
+  }
+  @media (max-width: 540px) {
+    .tarjeta { padding: 16px; }
+    .exclusion-form { grid-template-columns: 1fr; }
+    .envio .acciones { width: 100%; }
+    .envio .acciones .boton { flex: 1; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<noscript><p style="text-align:center;padding:40px 16px">Esta página necesita JavaScript para funcionar.</p></noscript>
+<script>
+'use strict';
+(function () {
+  const CLAVE_ALMACEN = 'amigo-invisible-v1';
+  const MAX_NOMBRE = 40;
+  const $app = document.getElementById('app');
+
+  // ===================================================================
+  // Utilidades
+  // ===================================================================
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const normalizar = (s) => String(s).replace(/\s+/g, ' ').trim();
+  const clave = (s) => normalizar(s).toLocaleLowerCase('es').normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+  const enumerar = (xs) => {
+    const q = xs.map((x) => `«${x}»`);
+    return q.length < 2 ? q.join('') : q.slice(0, -1).join(', ') + ' y ' + q[q.length - 1];
+  };
+  const formatoFecha = (t) => new Date(t).toLocaleString('es-ES', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+
+  function uid() {
+    const b = new Uint8Array(8);
+    crypto.getRandomValues(b);
+    return Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+  }
+
+  // Entero aleatorio uniforme en [0, n), sin sesgo de módulo.
+  function azar(n) {
+    const limite = Math.floor(0x100000000 / n) * n;
+    const b = new Uint32Array(1);
+    do { crypto.getRandomValues(b); } while (b[0] >= limite);
+    return b[0] % n;
+  }
+
+  function barajar(xs) {
+    const a = xs.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = azar(i + 1);
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // ===================================================================
+  // Sorteo
+  // ===================================================================
+
+  // Para cada persona, la lista de personas a las que puede regalar.
+  function construirPermitidos(sorteo) {
+    const ps = sorteo.participantes;
+    const prohibido = new Set(sorteo.exclusiones.map((e) => e.de + '>' + e.a));
+    const permitidos = new Map();
+    for (const p of ps) {
+      permitidos.set(p.id, ps
+        .filter((q) => q.id !== p.id && !(p.grupo && p.grupo === q.grupo) && !prohibido.has(p.id + '>' + q.id))
+        .map((q) => q.id));
+    }
+    return permitidos;
+  }
+
+  // ¿Pueden todos los 'dadores' recibir un destinatario distinto, sin usar los 'ocupados'?
+  // Emparejamiento bipartito máximo (algoritmo de Kuhn).
+  function hayEmparejamientoCompleto(dadores, permitidos, ocupados) {
+    const parejaDe = new Map(); // destinatario -> dador
+    function aumentar(d, visto) {
+      for (const r of permitidos.get(d)) {
+        if (ocupados.has(r) || visto.has(r)) continue;
+        visto.add(r);
+        if (!parejaDe.has(r) || aumentar(parejaDe.get(r), visto)) {
+          parejaDe.set(r, d);
+          return true;
+        }
+      }
+      return false;
+    }
+    for (const d of dadores) {
+      if (!aumentar(d, new Set())) return false;
+    }
+    return true;
+  }
+
+  function explicarImposible(sorteo, permitidos) {
+    const ps = sorteo.participantes;
+    const n = ps.length;
+    for (const g of sorteo.grupos) {
+      const k = ps.filter((p) => p.grupo === g.id).length;
+      if (k > n / 2) {
+        return `El grupo «${g.nombre}» tiene ${k} de ${n} personas. Un grupo no puede tener más de la mitad de los participantes, porque no habría suficientes personas fuera del grupo a las que regalar.`;
+      }
+    }
+    for (const p of ps) {
+      if (permitidos.get(p.id).length === 0) return `Con estas reglas, ${p.nombre} no puede regalar a nadie.`;
+    }
+    for (const p of ps) {
+      if (!ps.some((q) => permitidos.get(q.id).includes(p.id))) return `Con estas reglas, nadie puede regalar a ${p.nombre}.`;
+    }
+    return 'Con estas exclusiones no hay ninguna forma de hacer el sorteo. Prueba a quitar alguna exclusión o a sacar a alguien de un grupo.';
+  }
+
+  // Devuelve { ok: true, asignacion: { idDador: idDestinatario } } o { ok: false, motivo }.
+  // Va eligiendo al azar y solo acepta una elección si el resto del sorteo sigue siendo posible,
+  // así que nunca se atasca y siempre encuentra solución cuando existe.
+  function sortear(sorteo) {
+    const ids = sorteo.participantes.map((p) => p.id);
+    const permitidos = construirPermitidos(sorteo);
+    if (!hayEmparejamientoCompleto(ids, permitidos, new Set())) {
+      return { ok: false, motivo: explicarImposible(sorteo, permitidos) };
+    }
+    const asignacion = {};
+    const ocupados = new Set();
+    const pendientes = barajar(ids);
+    while (pendientes.length) {
+      const d = pendientes.shift();
+      let elegido = null;
+      for (const r of barajar(permitidos.get(d).filter((x) => !ocupados.has(x)))) {
+        ocupados.add(r);
+        if (hayEmparejamientoCompleto(pendientes, permitidos, ocupados)) { elegido = r; break; }
+        ocupados.delete(r);
+      }
+      if (elegido === null) return { ok: false, motivo: 'Algo ha fallado al hacer el sorteo. Vuelve a intentarlo.' };
+      asignacion[d] = elegido;
+    }
+    return { ok: true, asignacion };
+  }
+
+  // ===================================================================
+  // Enlaces: el resultado va en el fragmento de la URL (#...), ofuscado
+  // para que no se lea a simple vista. El fragmento no llega a ningún servidor.
+  // ===================================================================
+  const codificadorTexto = new TextEncoder();
+  const decodificadorTexto = new TextDecoder();
+
+  function aB64url(bytes) {
+    let s = '';
+    bytes.forEach((b) => { s += String.fromCharCode(b); });
+    return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  function desdeB64url(texto) {
+    let s = texto.replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    return Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+  }
+
+  function flujo(semilla, n) { // xorshift32
+    let x = (semilla >>> 0) || 0x9e3779b9;
+    const out = new Uint8Array(n);
+    for (let i = 0; i < n; i++) {
+      x = (x ^ (x << 13)) >>> 0;
+      x = (x ^ (x >>> 17)) >>> 0;
+      x = (x ^ (x << 5)) >>> 0;
+      out[i] = x & 0xff;
+    }
+    return out;
+  }
+
+  function codificar(datos) {
+    const cuerpo = codificadorTexto.encode(JSON.stringify(datos));
+    const sal = new Uint8Array(4);
+    crypto.getRandomValues(sal);
+    const k = flujo(new DataView(sal.buffer).getUint32(0), cuerpo.length + 1);
+    const out = new Uint8Array(4 + cuerpo.length + 1);
+    out.set(sal, 0);
+    let suma = 0;
+    cuerpo.forEach((b, i) => {
+      out[4 + i] = b ^ k[i];
+      suma = (suma + b) & 0xff;
+    });
+    out[4 + cuerpo.length] = suma ^ k[cuerpo.length]; // detecta enlaces cortados o alterados
+    return 'v1.' + aB64url(out);
+  }
+
+  function decodificar(texto) {
+    try {
+      texto = decodeURIComponent(texto).trim();
+      if (!texto.startsWith('v1.')) return null;
+      const bytes = desdeB64url(texto.slice(3));
+      if (bytes.length < 6) return null;
+      const n = bytes.length - 5;
+      const k = flujo(new DataView(bytes.buffer, bytes.byteOffset, 4).getUint32(0), n + 1);
+      const cuerpo = new Uint8Array(n);
+      let suma = 0;
+      for (let i = 0; i < n; i++) {
+        cuerpo[i] = bytes[4 + i] ^ k[i];
+        suma = (suma + cuerpo[i]) & 0xff;
+      }
+      if ((bytes[4 + n] ^ k[n]) !== suma) return null;
+      const datos = JSON.parse(decodificadorTexto.decode(cuerpo));
+      if (!datos || typeof datos.d !== 'string' || typeof datos.r !== 'string') return null;
+      return datos;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  const urlBase = () => location.href.split('#')[0];
+  const esLocal = () => location.protocol === 'file:' || ['localhost', '127.0.0.1', '[::1]', ''].includes(location.hostname) || location.hostname.endsWith('.localhost');
+
+  // ===================================================================
+  // Estado del organizador (solo en este navegador)
+  // ===================================================================
+  function cargar() {
+    try {
+      const e = JSON.parse(localStorage.getItem(CLAVE_ALMACEN));
+      if (e && Array.isArray(e.sorteos)) return e;
+    } catch (_) { /* datos dañados: se empieza de cero */ }
+    return { sorteos: [], activo: null };
+  }
+  const estado = cargar();
+  function guardar() {
+    try { localStorage.setItem(CLAVE_ALMACEN, JSON.stringify(estado)); } catch (_) { /* sin almacenamiento */ }
+  }
+
+  const borradorVacio = () => ({ nombres: '', grupo: '', de: '', a: '', ambos: true });
+  let borrador = borradorVacio(); // lo que se está escribiendo y aún no se ha añadido
+  const avisos = {};               // mensajes que se muestran una vez
+  let copiado = null;
+  let renderPendiente = null;
+
+  const sorteoActivo = () => estado.sorteos.find((s) => s.id === estado.activo) || estado.sorteos[0] || null;
+  const nombreSorteo = (s) => normalizar(s.nombre) || 'Sin nombre';
+  const persona = (s, id) => s.participantes.find((p) => p.id === id);
+
+  function duplicados(s) {
+    const vistos = new Set();
+    const dups = new Set();
+    for (const p of s.participantes) {
+      const k = clave(p.nombre);
+      if (!k) continue;
+      if (vistos.has(k)) dups.add(k);
+      vistos.add(k);
+    }
+    return dups;
+  }
+
+  function exclusionesAgrupadas(s) {
+    const hechas = new Set();
+    const out = [];
+    for (const e of s.exclusiones) {
+      if (hechas.has(e.de + '>' + e.a)) continue;
+      const mutua = s.exclusiones.some((x) => x.de === e.a && x.a === e.de);
+      hechas.add(e.de + '>' + e.a);
+      if (mutua) hechas.add(e.a + '>' + e.de);
+      out.push({ de: e.de, a: e.a, mutua });
+    }
+    return out;
+  }
+
+  function validar(s) {
+    if (estado.sorteos.length > 1 && !normalizar(s.nombre)) return 'Ponle un nombre a este sorteo (por ejemplo, «Primos») para que cada persona sepa de qué sorteo es su enlace.';
+    if (s.participantes.length < 3) return 'Hacen falta al menos 3 participantes para que el sorteo sea secreto.';
+    if (s.participantes.some((p) => !normalizar(p.nombre))) return 'Hay alguna persona sin nombre en la lista.';
+    if (duplicados(s).size) return 'Hay nombres repetidos en la lista. Distínguelos antes de sortear (por ejemplo, «Ana G.» y «Ana M.»).';
+    return null;
+  }
+
+  function mensajeDe(s, p) {
+    const url = urlBase() + '#' + s.resultado.enlaces[p.id];
+    const titulo = normalizar(s.nombre) ? `Amigo invisible · ${normalizar(s.nombre)}` : 'Amigo invisible';
+    return `🎁 *${titulo}*\n\nEste enlace es para *${p.nombre}*. Ábrelo para descubrir a quién le regalas (si no eres ${p.nombre}, no lo abras 😉):\n\n${url}`;
+  }
+
+  // ===================================================================
+  // Vista del organizador
+  // ===================================================================
+  function htmlAviso(donde) {
+    const a = avisos[donde];
+    if (!a) return '';
+    delete avisos[donde];
+    return `<p class="mensaje ${a.tipo}" role="${a.tipo === 'error' ? 'alert' : 'status'}">${esc(a.texto)}</p>`;
+  }
+
+  function htmlPestanas(activo) {
+    return `<nav class="pestanas" role="tablist" aria-label="Sorteos">
+      ${estado.sorteos.map((s) => `<button type="button" class="pestana" role="tab" aria-selected="${s.id === activo.id}" data-accion="seleccionar-sorteo" data-id="${s.id}" data-pestana="${s.id}">${esc(nombreSorteo(s))}${s.resultado ? ' ✓' : ''}</button>`).join('')}
+      <button type="button" class="pestana nueva" data-accion="nuevo-sorteo">+ Nuevo sorteo</button>
+    </nav>`;
+  }
+
+  function htmlVacio() {
+    return `<section class="tarjeta vacio">
+      <div class="emoji" aria-hidden="true">🎄</div>
+      <h2>Crea tu primer sorteo</h2>
+      <p class="ayuda">Puedes tener varios a la vez, por ejemplo uno para los primos y otro para los adultos.</p>
+      <button type="button" class="boton principal" data-accion="nuevo-sorteo">Crear sorteo</button>
+    </section>`;
+  }
+
+  function htmlCabeceraSorteo(s) {
+    const n = s.participantes.length;
+    return `<section class="tarjeta">
+      <div class="nombre-sorteo">
+        <input type="text" id="nombre-sorteo" value="${esc(s.nombre)}" placeholder="Nombre del sorteo (p. ej. Primos)" maxlength="60" aria-label="Nombre del sorteo" data-entrada="nombre-sorteo"${s.resultado ? ' readonly' : ''}>
+        <button type="button" class="boton icono" data-accion="eliminar-sorteo">Eliminar</button>
+      </div>
+      <p class="resumen">${plural(n, 'participante', 'participantes')} · ${plural(s.grupos.length, 'grupo', 'grupos')} · ${plural(exclusionesAgrupadas(s).length, 'exclusión', 'exclusiones')}${s.resultado ? ' · sorteo hecho' : ''}</p>
+    </section>`;
+  }
+
+  function htmlEdicion(s) {
+    const n = s.participantes.length;
+    const dups = duplicados(s);
+    const grupo = (id) => s.grupos.find((g) => g.id === id);
+    const conNombre = s.participantes.filter((p) => normalizar(p.nombre));
+
+    // 1. Participantes
+    const filas = s.participantes.map((p, i) => {
+      const g = p.grupo ? grupo(p.grupo) : null;
+      return `<li class="persona${dups.has(clave(p.nombre)) ? ' duplicado' : ''}">
+        <span class="num">${i + 1}</span>
+        <input type="text" value="${esc(p.nombre)}" maxlength="${MAX_NOMBRE}" aria-label="Nombre de la persona ${i + 1}" data-entrada="nombre-persona" data-cambio="nombre-persona" data-id="${p.id}">
+        ${g ? `<span class="etiqueta-grupo" title="Grupo: ${esc(g.nombre)}">${esc(g.nombre)}</span>` : ''}
+        <button type="button" class="boton icono" data-accion="quitar-persona" data-id="${p.id}" aria-label="Quitar a ${esc(p.nombre)}" title="Quitar">✕</button>
+      </li>`;
+    }).join('');
+
+    const seccionParticipantes = `<section class="tarjeta">
+      <h2>1. Participantes <span class="contador">${n}</span></h2>
+      <p class="ayuda">Escribe o pega los nombres, uno por línea (también vale separarlos con comas).</p>
+      <div class="pila">
+        <textarea id="nuevos-nombres" data-borrador="nombres" placeholder="Ana&#10;Luis&#10;Marta" aria-label="Nombres que añadir">${esc(borrador.nombres)}</textarea>
+        <div><button type="button" class="boton principal" data-accion="anadir-personas">Añadir a la lista</button></div>
+      </div>
+      ${htmlAviso('personas')}
+      ${n ? `<ol class="lista">${filas}</ol>` : ''}
+      ${dups.size ? '<p class="mensaje error">Hay nombres repetidos (en rojo). Añade una inicial para distinguirlos, por ejemplo «Ana G.» y «Ana M.».</p>' : ''}
+    </section>`;
+
+    // 2. Grupos
+    const grupos = s.grupos.map((g) => {
+      const miembros = s.participantes.filter((p) => p.grupo === g.id);
+      const otros = s.participantes
+        .filter((p) => p.grupo !== g.id && normalizar(p.nombre))
+        .sort((a, b) => (a.grupo ? 1 : 0) - (b.grupo ? 1 : 0));
+      const opciones = otros.map((p) => {
+        const og = p.grupo ? grupo(p.grupo) : null;
+        return `<option value="${p.id}">${esc(p.nombre)}${og ? ` (ahora en ${esc(og.nombre)})` : ''}</option>`;
+      }).join('');
+      return `<div class="grupo">
+        <div class="grupo-cab">
+          <strong>${esc(g.nombre)}</strong>
+          <button type="button" class="boton icono" data-accion="quitar-grupo" data-id="${g.id}">Eliminar grupo</button>
+        </div>
+        <div class="chips">
+          ${miembros.map((m) => `<span class="chip">${esc(m.nombre)}<button type="button" data-accion="sacar-de-grupo" data-id="${m.id}" aria-label="Sacar a ${esc(m.nombre)} del grupo" title="Sacar del grupo">×</button></span>`).join('')}
+          ${miembros.length ? '' : '<span class="ayuda">Todavía no hay nadie en este grupo.</span>'}
+          ${otros.length ? `<select data-cambio="anadir-a-grupo" data-grupo="${g.id}" aria-label="Añadir una persona a ${esc(g.nombre)}"><option value="">+ Añadir persona…</option>${opciones}</select>` : ''}
+        </div>
+        ${miembros.length > n / 2 ? '<p class="mensaje aviso">Este grupo tiene más de la mitad de los participantes, así que el sorteo no será posible.</p>' : ''}
+      </div>`;
+    }).join('');
+
+    const seccionGrupos = `<section class="tarjeta">
+      <h2>2. Grupos <span class="contador">opcional</span></h2>
+      <p class="ayuda">Las personas de un mismo grupo no se regalan entre sí. Úsalo para parejas, hermanos o gente que vive en la misma casa.</p>
+      <div class="fila">
+        <input type="text" id="nuevo-grupo" data-borrador="grupo" value="${esc(borrador.grupo)}" maxlength="${MAX_NOMBRE}" placeholder="Nombre del grupo (p. ej. Casa de la abuela)" aria-label="Nombre del nuevo grupo">
+        <button type="button" class="boton secundario" data-accion="anadir-grupo">Crear grupo</button>
+      </div>
+      ${htmlAviso('grupos')}
+      ${grupos}
+    </section>`;
+
+    // 3. Exclusiones sueltas
+    const opcionesPersona = (seleccion) => '<option value="">Elige persona…</option>' + conNombre
+      .map((p) => `<option value="${p.id}"${p.id === seleccion ? ' selected' : ''}>${esc(p.nombre)}</option>`).join('');
+    const nombreDe = (id) => (persona(s, id) || { nombre: '?' }).nombre;
+    const exclusiones = exclusionesAgrupadas(s).map((e) => `<li class="exclusion">
+        <span>${e.mutua
+          ? `<strong>${esc(nombreDe(e.de))}</strong> y <strong>${esc(nombreDe(e.a))}</strong> no se regalan entre sí`
+          : `<strong>${esc(nombreDe(e.de))}</strong> no le regala a <strong>${esc(nombreDe(e.a))}</strong>`}</span>
+        <button type="button" class="boton icono" data-accion="quitar-exclusion" data-de="${e.de}" data-a="${e.a}" data-mutua="${e.mutua ? 1 : 0}" aria-label="Quitar esta exclusión" title="Quitar">✕</button>
+      </li>`).join('');
+
+    const seccionExclusiones = `<section class="tarjeta">
+      <h2>3. Exclusiones sueltas <span class="contador">opcional</span></h2>
+      <p class="ayuda">Para casos concretos fuera de los grupos, por ejemplo que a alguien no le toque la misma persona que el año pasado.</p>
+      ${conNombre.length < 2 ? '<p class="ayuda">Añade antes al menos dos participantes.</p>' : `
+        <div class="exclusion-form">
+          <select id="excl-de" data-borrador="de" aria-label="Persona que regala">${opcionesPersona(borrador.de)}</select>
+          <span class="texto">no le regala a</span>
+          <select id="excl-a" data-borrador="a" aria-label="Persona que recibe">${opcionesPersona(borrador.a)}</select>
+        </div>
+        <div class="exclusion-opciones">
+          <label class="check"><input type="checkbox" id="excl-ambos" data-borrador="ambos"${borrador.ambos ? ' checked' : ''}> Y tampoco al revés</label>
+          <button type="button" class="boton secundario" data-accion="anadir-exclusion">Añadir exclusión</button>
+        </div>`}
+      ${htmlAviso('exclusiones')}
+      ${exclusiones ? `<ul class="lista">${exclusiones}</ul>` : ''}
+    </section>`;
+
+    const seccionSorteo = `<section class="tarjeta">
+      <button type="button" class="boton principal grande" data-accion="sortear">🎲 Hacer el sorteo</button>
+      ${htmlAviso('sorteo')}
+      <p class="ayuda" style="margin:10px 0 0;text-align:center">No verás a quién le toca cada uno: solo los enlaces para enviar.</p>
+    </section>`;
+
+    return seccionParticipantes + seccionGrupos + seccionExclusiones + seccionSorteo;
+  }
+
+  function htmlResultado(s) {
+    const total = s.participantes.length;
+    const enviados = s.participantes.filter((p) => s.resultado.enviados[p.id]).length;
+    const filas = s.participantes.map((p) => {
+      const ok = !!s.resultado.enviados[p.id];
+      return `<li class="envio${ok ? ' enviado' : ''}">
+        <span class="quien">${esc(p.nombre)}${ok ? ' <span class="marca" title="Enviado">✓</span>' : ''}</span>
+        <span class="acciones">
+          <a class="boton verde" href="https://wa.me/?text=${encodeURIComponent(mensajeDe(s, p))}" target="_blank" rel="noopener" data-accion="whatsapp" data-id="${p.id}">WhatsApp</a>
+          <button type="button" class="boton secundario" data-accion="copiar" data-id="${p.id}">${copiado === p.id ? '¡Copiado!' : 'Copiar'}</button>
+        </span>
+        <button type="button" class="estado" data-accion="alternar-enviado" data-id="${p.id}">${ok ? 'Marcar como no enviado' : 'Marcar como enviado'}</button>
+      </li>`;
+    }).join('');
+
+    return `<section class="tarjeta">
+      <h2>Enlaces para enviar <span class="contador">${enviados} de ${total} enviados</span></h2>
+      <div class="progreso" aria-hidden="true"><div style="width:${total ? (enviados / total) * 100 : 0}%"></div></div>
+      <p class="ayuda">Sorteo hecho el ${esc(formatoFecha(s.resultado.fecha))}. Pulsa «WhatsApp» y elige a la persona (o a su madre o padre, si es pequeña). Cada envío se marca solo. Si tú también participas, ábrete tu propio enlace.</p>
+      ${esLocal() ? `<p class="mensaje aviso"><strong>Ojo:</strong> estás usando la página desde tu propio ordenador, así que estos enlaces no funcionarán en los móviles de tu familia. Publica la página y haz el sorteo desde la dirección publicada antes de enviar nada.</p>` : ''}
+      ${htmlAviso('resultado')}
+      <ul class="lista">${filas}</ul>
+    </section>
+    <section class="tarjeta">
+      <h2>¿Necesitas cambiar algo?</h2>
+      <p class="ayuda">Si añades o quitas a alguien hay que repetir el sorteo. Los enlaces que ya hayas enviado seguirán mostrando el resultado antiguo, así que tendrías que enviar los nuevos a todo el mundo.</p>
+      <button type="button" class="boton peligro" data-accion="repetir-sorteo">Modificar y repetir el sorteo</button>
+    </section>`;
+  }
+
+  function render(enfocar) {
+    clearTimeout(renderPendiente);
+    const s = sorteoActivo();
+    estado.activo = s ? s.id : null;
+    const foco = enfocar ? null : capturarFoco();
+    $app.innerHTML = `<div class="contenedor">
+      <header class="cabecera">
+        <h1>🎁 Amigo invisible</h1>
+        <p>Haz el sorteo y envía a cada persona su enlace secreto.</p>
+      </header>
+      ${s ? htmlPestanas(s) : ''}
+      ${s ? htmlCabeceraSorteo(s) + (s.resultado ? htmlResultado(s) : htmlEdicion(s)) : htmlVacio()}
+      <p class="pie">Las listas se guardan solo en este navegador.</p>
+    </div>`;
+    if (enfocar) {
+      const el = $app.querySelector(enfocar);
+      if (el) el.focus();
+    } else {
+      restaurarFoco(foco);
+    }
+  }
+
+  // Al redibujar se conserva el campo en el que se estaba escribiendo.
+  function capturarFoco() {
+    const el = document.activeElement;
+    if (!el || el === document.body || !$app.contains(el)) return null;
+    let selector = null;
+    if (el.id) selector = '#' + el.id;
+    else if (el.dataset.id && el.dataset.entrada) selector = `[data-entrada="${el.dataset.entrada}"][data-id="${el.dataset.id}"]`;
+    else if (el.dataset.id && el.dataset.accion) selector = `[data-accion="${el.dataset.accion}"][data-id="${el.dataset.id}"]`;
+    if (!selector) return null;
+    let inicio = null;
+    let fin = null;
+    try { inicio = el.selectionStart; fin = el.selectionEnd; } catch (_) { /* no es un campo de texto */ }
+    return { selector, inicio, fin };
+  }
+
+  function restaurarFoco(f) {
+    if (!f) return;
+    const el = $app.querySelector(f.selector);
+    if (!el) return;
+    el.focus({ preventScroll: true });
+    if (f.inicio != null && el.setSelectionRange) {
+      try { el.setSelectionRange(f.inicio, f.fin); } catch (_) { /* no aplica */ }
+    }
+  }
+
+  // ===================================================================
+  // Acciones
+  // ===================================================================
+  function anadirPersonas(s) {
+    const nombres = borrador.nombres.split(/[\n,;]+/).map(normalizar).filter(Boolean);
+    if (!nombres.length) {
+      avisos.personas = { tipo: 'aviso', texto: 'Escribe al menos un nombre.' };
+      return render('#nuevos-nombres');
+    }
+    const existentes = new Set(s.participantes.map((p) => clave(p.nombre)));
+    const repetidos = [];
+    for (const nombre of nombres) {
+      const k = clave(nombre);
+      if (existentes.has(k)) { repetidos.push(nombre); continue; }
+      existentes.add(k);
+      s.participantes.push({ id: uid(), nombre: nombre.slice(0, MAX_NOMBRE), grupo: null });
+    }
+    if (repetidos.length) {
+      const varios = repetidos.length > 1;
+      avisos.personas = { tipo: 'aviso', texto: `${enumerar(repetidos)} ya ${varios ? 'estaban' : 'estaba'} en la lista y no se ${varios ? 'han' : 'ha'} vuelto a añadir. Si es otra persona con el mismo nombre, añade una inicial (por ejemplo, «Ana G.»).` };
+    }
+    borrador.nombres = '';
+    guardar();
+    render('#nuevos-nombres');
+  }
+
+  function anadirExclusion(s) {
+    const { de, a, ambos } = borrador;
+    if (!de || !a) {
+      avisos.exclusiones = { tipo: 'aviso', texto: 'Elige las dos personas.' };
+      return render();
+    }
+    if (de === a) {
+      avisos.exclusiones = { tipo: 'aviso', texto: 'Elige dos personas distintas.' };
+      return render();
+    }
+    const pd = persona(s, de);
+    const pa = persona(s, a);
+    if (pd && pa && pd.grupo && pd.grupo === pa.grupo) {
+      avisos.exclusiones = { tipo: 'aviso', texto: `${pd.nombre} y ${pa.nombre} ya están en el mismo grupo, así que ya no se regalan entre sí.` };
+      return render();
+    }
+    const existe = (x, y) => s.exclusiones.some((e) => e.de === x && e.a === y);
+    if (!existe(de, a)) s.exclusiones.push({ de, a });
+    if (ambos && !existe(a, de)) s.exclusiones.push({ de: a, a: de });
+    borrador.de = '';
+    borrador.a = '';
+    borrador.ambos = true;
+    guardar();
+    render();
+  }
+
+  function hacerSorteo(s) {
+    const error = validar(s);
+    if (error) {
+      avisos.sorteo = { tipo: 'error', texto: error };
+      return render();
+    }
+    const r = sortear(s);
+    if (!r.ok) {
+      avisos.sorteo = { tipo: 'error', texto: r.motivo };
+      return render();
+    }
+    // Solo se guardan los enlaces ya codificados, nunca la lista de quién regala a quién.
+    const fecha = Date.now();
+    const enlaces = {};
+    for (const p of s.participantes) {
+      enlaces[p.id] = codificar({ s: normalizar(s.nombre), d: normalizar(p.nombre), r: normalizar(persona(s, r.asignacion[p.id]).nombre), t: fecha });
+    }
+    s.nombre = normalizar(s.nombre);
+    s.resultado = { fecha, enlaces, enviados: {} };
+    borrador = borradorVacio();
+    guardar();
+    render();
+    window.scrollTo({ top: 0 });
+  }
+
+  async function copiarTexto(texto) {
+    try {
+      await navigator.clipboard.writeText(texto);
+      return true;
+    } catch (_) {
+      const ta = document.createElement('textarea');
+      ta.value = texto;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+      document.body.appendChild(ta);
+      ta.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (__) { ok = false; }
+      ta.remove();
+      return ok;
+    }
+  }
+
+  async function ejecutar(accion, el) {
+    // Vista del participante
+    if (accion === 'descubrir' || accion === 'ocultar') {
+      const zona = document.getElementById('zona-secreto');
+      if (zona && datosParticipante) {
+        zona.innerHTML = accion === 'descubrir' ? htmlDescubierto(datosParticipante) : htmlTapado(datosParticipante);
+        const boton = zona.querySelector('button');
+        if (boton) boton.focus({ preventScroll: true });
+      }
+      return;
+    }
+
+    const s = sorteoActivo();
+    const id = el.dataset.id;
+    switch (accion) {
+      case 'nuevo-sorteo': {
+        const nuevo = { id: uid(), nombre: '', participantes: [], grupos: [], exclusiones: [], resultado: null };
+        estado.sorteos.push(nuevo);
+        estado.activo = nuevo.id;
+        borrador = borradorVacio();
+        guardar();
+        render('#nombre-sorteo');
+        break;
+      }
+      case 'seleccionar-sorteo':
+        if (id !== estado.activo) borrador = borradorVacio();
+        estado.activo = id;
+        guardar();
+        render();
+        break;
+      case 'eliminar-sorteo':
+        if (!confirm(`¿Eliminar el sorteo «${nombreSorteo(s)}»? Se perderán su lista y sus enlaces.`)) break;
+        estado.sorteos = estado.sorteos.filter((x) => x.id !== s.id);
+        estado.activo = estado.sorteos.length ? estado.sorteos[0].id : null;
+        borrador = borradorVacio();
+        guardar();
+        render();
+        break;
+      case 'anadir-personas':
+        anadirPersonas(s);
+        break;
+      case 'quitar-persona':
+        s.participantes = s.participantes.filter((p) => p.id !== id);
+        s.exclusiones = s.exclusiones.filter((e) => e.de !== id && e.a !== id);
+        if (borrador.de === id) borrador.de = '';
+        if (borrador.a === id) borrador.a = '';
+        guardar();
+        render();
+        break;
+      case 'anadir-grupo': {
+        const nombre = normalizar(borrador.grupo) || `Grupo ${s.grupos.length + 1}`;
+        if (s.grupos.some((g) => clave(g.nombre) === clave(nombre))) {
+          avisos.grupos = { tipo: 'aviso', texto: `Ya hay un grupo que se llama «${nombre}».` };
+          render('#nuevo-grupo');
+          break;
+        }
+        s.grupos.push({ id: uid(), nombre: nombre.slice(0, MAX_NOMBRE) });
+        borrador.grupo = '';
+        guardar();
+        render('#nuevo-grupo');
+        break;
+      }
+      case 'quitar-grupo':
+        s.grupos = s.grupos.filter((g) => g.id !== id);
+        s.participantes.forEach((p) => { if (p.grupo === id) p.grupo = null; });
+        guardar();
+        render();
+        break;
+      case 'sacar-de-grupo': {
+        const p = persona(s, id);
+        if (p) p.grupo = null;
+        guardar();
+        render();
+        break;
+      }
+      case 'anadir-exclusion':
+        anadirExclusion(s);
+        break;
+      case 'quitar-exclusion': {
+        const { de, a, mutua } = el.dataset;
+        s.exclusiones = s.exclusiones.filter((e) => !(e.de === de && e.a === a) && !(mutua === '1' && e.de === a && e.a === de));
+        guardar();
+        render();
+        break;
+      }
+      case 'sortear':
+        hacerSorteo(s);
+        break;
+      case 'whatsapp':
+        // No se cancela el clic: el enlace abre WhatsApp en otra pestaña o en la app.
+        s.resultado.enviados[id] = true;
+        guardar();
+        setTimeout(render, 300);
+        break;
+      case 'copiar': {
+        const p = persona(s, id);
+        if (!p) break;
+        if (await copiarTexto(mensajeDe(s, p))) {
+          s.resultado.enviados[id] = true;
+          guardar();
+          copiado = id;
+          render();
+          setTimeout(() => { if (copiado === id) { copiado = null; render(); } }, 2000);
+        } else {
+          avisos.resultado = { tipo: 'error', texto: 'Este navegador no ha dejado copiar el mensaje. Usa el botón de WhatsApp.' };
+          render();
+        }
+        break;
+      }
+      case 'alternar-enviado':
+        s.resultado.enviados[id] = !s.resultado.enviados[id];
+        guardar();
+        render();
+        break;
+      case 'repetir-sorteo': {
+        const hayEnviados = Object.values(s.resultado.enviados).some(Boolean);
+        if (hayEnviados && !confirm('Ya has enviado algunos enlaces. Si repites el sorteo, esos enlaces seguirán mostrando el resultado antiguo y tendrás que enviar los nuevos a todo el mundo.\n\n¿Quieres modificar la lista y repetir el sorteo?')) break;
+        s.resultado = null;
+        guardar();
+        render();
+        window.scrollTo({ top: 0 });
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  // ===================================================================
+  // Eventos (delegados en #app)
+  // ===================================================================
+  function actualizarBorrador(el) {
+    const campo = el.dataset.borrador;
+    if (!campo) return false;
+    borrador[campo] = el.type === 'checkbox' ? el.checked : el.value;
+    return true;
+  }
+
+  $app.addEventListener('click', (ev) => {
+    const el = ev.target.closest('[data-accion]');
+    if (el && $app.contains(el)) ejecutar(el.dataset.accion, el);
+  });
+
+  $app.addEventListener('input', (ev) => {
+    const el = ev.target;
+    if (actualizarBorrador(el)) return;
+    const s = sorteoActivo();
+    if (!s) return;
+    if (el.dataset.entrada === 'nombre-sorteo' && !s.resultado) {
+      s.nombre = el.value;
+      guardar();
+      const pestana = $app.querySelector(`[data-pestana="${s.id}"]`);
+      if (pestana) pestana.textContent = nombreSorteo(s);
+    } else if (el.dataset.entrada === 'nombre-persona') {
+      const p = persona(s, el.dataset.id);
+      if (p) { p.nombre = el.value; guardar(); }
+    }
+  });
+
+  $app.addEventListener('change', (ev) => {
+    const el = ev.target;
+    if (el.dataset.borrador) {
+      // Los campos de texto ya se guardan con 'input'. Su 'change' puede llegar tarde
+      // (al redibujar) y devolvería al borrador un texto ya añadido.
+      if (el.tagName === 'SELECT' || el.type === 'checkbox') actualizarBorrador(el);
+      return;
+    }
+    const s = sorteoActivo();
+    if (!s) return;
+    if (el.dataset.cambio === 'nombre-persona') {
+      const p = persona(s, el.dataset.id);
+      if (p) { p.nombre = normalizar(el.value).slice(0, MAX_NOMBRE); guardar(); }
+      // Se espera un momento antes de redibujar para no "comerse" el clic
+      // si el cambio se ha confirmado pulsando un botón.
+      clearTimeout(renderPendiente);
+      renderPendiente = setTimeout(render, 250);
+    } else if (el.dataset.cambio === 'anadir-a-grupo' && el.value) {
+      const p = persona(s, el.value);
+      if (p) { p.grupo = el.dataset.grupo; guardar(); render(); }
+    }
+  });
+
+  $app.addEventListener('keydown', (ev) => {
+    if (ev.key !== 'Enter') return;
+    const el = ev.target;
+    if (el.id === 'nuevo-grupo') {
+      ev.preventDefault();
+      ejecutar('anadir-grupo', el);
+    } else if (el.id === 'nuevos-nombres' && (ev.ctrlKey || ev.metaKey)) {
+      ev.preventDefault();
+      ejecutar('anadir-personas', el);
+    } else if (el.matches('input[type=text]')) {
+      ev.preventDefault();
+      el.blur();
+    }
+  });
+
+  // ===================================================================
+  // Vista del participante
+  // ===================================================================
+  let datosParticipante = null;
+
+  function htmlTapado(d) {
+    return `<p>Comprueba que nadie está mirando tu pantalla 👀</p>
+      <button type="button" class="boton principal grande" data-accion="descubrir">Descubrir a quién le regalo</button>
+      <p class="nota">¿No eres ${esc(d.d)}? Cierra esta página sin pulsar el botón.</p>`;
+  }
+
+  function htmlDescubierto(d) {
+    return `<div class="secreto" role="status">
+        <p class="te-toca">Te ha tocado regalar a</p>
+        <p class="nombre-secreto">${esc(d.r)}</p>
+        <p>¡Que no se entere nadie! 🤫<br>Puedes volver a abrir este enlace cuando quieras.</p>
+        <button type="button" class="boton secundario" data-accion="ocultar">Ocultar</button>
+      </div>`;
+  }
+
+  function vistaParticipante(d) {
+    document.title = 'Tu amigo invisible 🎁';
+    $app.innerHTML = `<main class="participante"><div class="regalo">
+        <div class="lazo" aria-hidden="true">🎁</div>
+        <p class="sorteo">Amigo invisible${d.s ? ' · ' + esc(d.s) : ''}</p>
+        <h1>Hola, ${esc(d.d)}</h1>
+        <div id="zona-secreto">${htmlTapado(d)}</div>
+        ${typeof d.t === 'number' ? `<p class="nota">Sorteo hecho el ${esc(formatoFecha(d.t))}.</p>` : ''}
+      </div></main>`;
+  }
+
+  function vistaEnlaceRoto() {
+    document.title = 'Enlace no válido';
+    $app.innerHTML = `<main class="participante"><div class="regalo">
+        <div class="lazo" aria-hidden="true">🧐</div>
+        <h1 style="margin-top:14px">Este enlace no funciona</h1>
+        <p>Puede que se haya cortado al copiarlo. Pide a quien organiza el sorteo que te lo vuelva a enviar.</p>
+      </div></main>`;
+  }
+
+  // ===================================================================
+  // Arranque: con #fragmento es la vista del participante; sin él, la del organizador.
+  // ===================================================================
+  function arrancar() {
+    const fragmento = location.hash.replace(/^#/, '').trim();
+    if (fragmento) {
+      datosParticipante = decodificar(fragmento);
+      if (datosParticipante) vistaParticipante(datosParticipante);
+      else vistaEnlaceRoto();
+    } else {
+      datosParticipante = null;
+      document.title = 'Amigo invisible';
+      render();
+    }
+  }
+
+  window.addEventListener('hashchange', arrancar);
+  window.amigoInvisible = { sortear, validar, codificar, decodificar }; // para pruebas
+  arrancar();
+})();
+</script>
+</body>
+</html>
